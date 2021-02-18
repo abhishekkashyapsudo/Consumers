@@ -26,6 +26,9 @@ public class ConsumerService implements IConsumerService{
 
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ConsumerService.class);
 
+	@Resource(name = "restTemplate")
+	private RestTemplate restTemplate;
+	
 	@Resource
 	IConsumerDao consumerDao;
 
@@ -61,7 +64,6 @@ public class ConsumerService implements IConsumerService{
 		Optional<Consumer> consumer = getConsumer(consumerId);
 		if(consumer.isPresent()) {
 			String baseUrl = loadBalancerClient.choose("requests").getUri().toString()+"/requests";
-			RestTemplate restTemplate = new RestTemplate();
 			ResponseEntity<String> response = null;
 			try {
 				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
@@ -88,7 +90,6 @@ public class ConsumerService implements IConsumerService{
 		Optional<Consumer> consumer = getConsumer(consumerId);
 		if(consumer.isPresent()) {
 			String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/consumer";
-			RestTemplate restTemplate = new RestTemplate();
 			ResponseEntity<String> response = null;
 			try {
 				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
@@ -111,7 +112,6 @@ public class ConsumerService implements IConsumerService{
 		Optional<Consumer> consumer = getConsumer(consumerId);
 		if(consumer.isPresent()) {
 			String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/allConsumers";
-			RestTemplate restTemplate = new RestTemplate();
 			ResponseEntity<String> response = null;
 			try {
 				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
