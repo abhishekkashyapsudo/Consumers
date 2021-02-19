@@ -62,12 +62,17 @@ public class ConsumerController {
 	@GetMapping(value = "orders/{consumerId}")
 	String getOrderCount(@PathVariable(name = "consumerId") String consumerId) throws ConsumerNotFoundException {
 		logger.info("Working from port " + port + " of Consumer service");
+		
+		if(!consumerService.getConsumer(consumerId).isPresent())
+			throw new ConsumerNotFoundException(consumerId);
 		return consumerService.getOrderCount(consumerId);
 	}
 	
 	@GetMapping(value = "allOrders/{consumerId}")
 	String getAllOrders(@PathVariable(name = "consumerId") String consumerId) throws ConsumerNotFoundException {
 		logger.info("Working from port " + port + " of Consumer service");
+		if(!consumerService.getConsumer(consumerId).isPresent())
+			throw new ConsumerNotFoundException(consumerId);
 		return consumerService.getAllOrders(consumerId);
 	}
 	
@@ -75,6 +80,8 @@ public class ConsumerController {
 	String placeRequest(@RequestParam String consumerId, @RequestParam String description,
 			@RequestParam String address,@RequestParam String serviceType) throws ConsumerNotFoundException {
 		logger.info("Working from port " + port + " of Consumer service");
+		if(!consumerService.getConsumer(consumerId).isPresent())
+			throw new ConsumerNotFoundException(consumerId);
 		return consumerService.placeRequest(consumerId, description, address, serviceType);
 	}
 	

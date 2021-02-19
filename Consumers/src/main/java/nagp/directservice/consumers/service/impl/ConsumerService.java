@@ -60,21 +60,8 @@ public class ConsumerService implements IConsumerService{
 
 	
 	@Override
-	public String placeRequest(String consumerId, String description, String address, String serviceType) throws ConsumerNotFoundException {
-		Optional<Consumer> consumer = getConsumer(consumerId);
-		if(consumer.isPresent()) {
-			ResponseEntity<String> response = placeRequestToRequests(consumerId, description, address, serviceType);
-			return response.getBody();
-		}
-		else {
-			throw new ConsumerNotFoundException(consumerId);
-		}
-
-	}
-
 	@HystrixCommand(fallbackMethod = "requestsFallback")
-	private ResponseEntity<String> placeRequestToRequests(String consumerId, String description, String address,
-			String serviceType) {
+	public String placeRequest(String consumerId, String description, String address, String serviceType) throws ConsumerNotFoundException {
 		String baseUrl = loadBalancerClient.choose("requests").getUri().toString()+"/requests";
 		ResponseEntity<String> response = null;
 		try {
@@ -88,25 +75,16 @@ public class ConsumerService implements IConsumerService{
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 		}
-		return response;
-	}
+		return response.getBody();
 
+	}
 
 	
-	public String getOrderCount(String consumerId) throws ConsumerNotFoundException{
-		Optional<Consumer> consumer = getConsumer(consumerId);
-		if(consumer.isPresent()) {
-			ResponseEntity<String> response = getOrdersCount(consumerId);
-			return response.getBody();
-		}
-		else {
-			throw new ConsumerNotFoundException(consumerId);
-		}
+	
 
-	}
 
 	@HystrixCommand(fallbackMethod = "getOrdersFallback")
-	private ResponseEntity<String> getOrdersCount(String consumerId) {
+	public String getOrderCount(String consumerId) throws ConsumerNotFoundException{
 		String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/consumer";
 		ResponseEntity<String> response = null;
 		try {
@@ -117,22 +95,14 @@ public class ConsumerService implements IConsumerService{
 		} catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 		}
-		return response;
+		return response.getBody();
+
 	}
 
-	
-	public String getAllOrders(String consumerId) throws ConsumerNotFoundException {
-		Optional<Consumer> consumer = getConsumer(consumerId);
-		if(consumer.isPresent()) {
-			return getAllOrdersFromOrder(consumerId);
-		}
-		else {
-			throw new ConsumerNotFoundException(consumerId);
-		}
-	}
+
 
 	@HystrixCommand(fallbackMethod = "getOrdersFallback")
-	private String getAllOrdersFromOrder(String consumerId) {
+	public String getAllOrders(String consumerId) throws ConsumerNotFoundException {
 		String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/allConsumers";
 		ResponseEntity<String> response = null;
 		try {
@@ -145,6 +115,7 @@ public class ConsumerService implements IConsumerService{
 		}
 		return response.getBody();
 	}
+
 
 	public String requestsFallback(String consumerId, String description, String address, String serviceType) {
 		logger.warn("Requests Service is down!!! fallback route enabled...");
