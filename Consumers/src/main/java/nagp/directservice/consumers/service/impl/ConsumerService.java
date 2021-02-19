@@ -58,24 +58,12 @@ public class ConsumerService implements IConsumerService{
 		return consumer.getConsumerId();
 	}
 
-	@HystrixCommand(fallbackMethod = "requestsFallback")
+	
 	@Override
 	public String placeRequest(String consumerId, String description, String address, String serviceType) throws ConsumerNotFoundException {
 		Optional<Consumer> consumer = getConsumer(consumerId);
 		if(consumer.isPresent()) {
-			String baseUrl = loadBalancerClient.choose("requests").getUri().toString()+"/requests";
-			ResponseEntity<String> response = null;
-			try {
-				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
-						.queryParam("consumerId", consumerId)
-						.queryParam("description", description)
-						.queryParam("address", address)
-						.queryParam("serviceType", serviceType);
-				response = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.POST, null,
-						String.class);
-			} catch (Exception ex) {
-				logger.error(ex.getMessage(), ex);
-			}
+			ResponseEntity<String> response = placeRequestToRequests(consumerId, description, address, serviceType);
 			return response.getBody();
 		}
 		else {
@@ -84,21 +72,31 @@ public class ConsumerService implements IConsumerService{
 
 	}
 
+	@HystrixCommand(fallbackMethod = "requestsFallback")
+	private ResponseEntity<String> placeRequestToRequests(String consumerId, String description, String address,
+			String serviceType) {
+		String baseUrl = loadBalancerClient.choose("requests").getUri().toString()+"/requests";
+		ResponseEntity<String> response = null;
+		try {
+			UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
+					.queryParam("consumerId", consumerId)
+					.queryParam("description", description)
+					.queryParam("address", address)
+					.queryParam("serviceType", serviceType);
+			response = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.POST, null,
+					String.class);
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+		}
+		return response;
+	}
 
-	@HystrixCommand(fallbackMethod = "getOrdersFallback")
+
+	
 	public String getOrderCount(String consumerId) throws ConsumerNotFoundException{
 		Optional<Consumer> consumer = getConsumer(consumerId);
 		if(consumer.isPresent()) {
-			String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/consumer";
-			ResponseEntity<String> response = null;
-			try {
-				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
-						.queryParam("consumerId", consumerId);
-				response = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, null,
-						String.class);
-			} catch (Exception ex) {
-				logger.error(ex.getMessage(), ex);
-			}
+			ResponseEntity<String> response = getOrdersCount(consumerId);
 			return response.getBody();
 		}
 		else {
@@ -108,24 +106,44 @@ public class ConsumerService implements IConsumerService{
 	}
 
 	@HystrixCommand(fallbackMethod = "getOrdersFallback")
+	private ResponseEntity<String> getOrdersCount(String consumerId) {
+		String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/consumer";
+		ResponseEntity<String> response = null;
+		try {
+			UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
+					.queryParam("consumerId", consumerId);
+			response = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, null,
+					String.class);
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+		}
+		return response;
+	}
+
+	
 	public String getAllOrders(String consumerId) throws ConsumerNotFoundException {
 		Optional<Consumer> consumer = getConsumer(consumerId);
 		if(consumer.isPresent()) {
-			String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/allConsumers";
-			ResponseEntity<String> response = null;
-			try {
-				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
-						.queryParam("consumerId", consumerId);
-				response = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, null,
-						String.class);
-			} catch (Exception ex) {
-				logger.error(ex.getMessage(), ex);
-			}
-			return response.getBody();
+			return getAllOrdersFromOrder(consumerId);
 		}
 		else {
 			throw new ConsumerNotFoundException(consumerId);
 		}
+	}
+
+	@HystrixCommand(fallbackMethod = "getOrdersFallback")
+	private String getAllOrdersFromOrder(String consumerId) {
+		String baseUrl = loadBalancerClient.choose("orders").getUri().toString() + "/orders/allConsumers";
+		ResponseEntity<String> response = null;
+		try {
+			UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(baseUrl)
+					.queryParam("consumerId", consumerId);
+			response = restTemplate.exchange(builder.buildAndExpand().toUri(), HttpMethod.GET, null,
+					String.class);
+		} catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+		}
+		return response.getBody();
 	}
 
 	public String requestsFallback(String consumerId, String description, String address, String serviceType) {
